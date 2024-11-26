@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "your-api-key",
+      authDomain: "your-app.firebaseapp.com",
+      projectId: "your-project-id",
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Login Form Submission
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const userDoc = await db.collection("users").doc(username).get();
+        if (userDoc.exists && userDoc.data().password === password) {
+          alert(`Welcome, ${username}!`);
+          window.location.href = `daily-log.html?depot=${encodeURIComponent(userDoc.data().depot)}`;
+        } else {
+          alert("Invalid username or password!");
+        }
+      } catch (error) {
+        console.error("Error during login:", error);
+      }
+    });
+  </script>
+</body>
+</html>

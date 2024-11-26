@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Log</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+</head>
+<body>
+  <h1>Daily Log Form</h1>
+  <form id="dailyLogForm">
+    <input type="text" id="depot" placeholder="Depot" readonly>
+    <input type="text" id="vehicleNo" placeholder="Vehicle No" required>
+    <input type="number" id="openingKM" placeholder="Opening KM Reading" required>
+    <input type="file" id="odometerPhoto" accept="image/*" required>
+    <button type="submit">Submit</button>
+  </form>
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "your-api-key",
+      authDomain: "your-app.firebaseapp.com",
+      projectId: "your-project-id",
+      storageBucket: "your-app.appspot.com"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Populate Depot Field
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById("depot").value = params.get("depot");
+
+    // Form Submission
+    document.getElementById("dailyLogForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const depot = document.getElementById("depot").value;
+      const vehicleNo = document.getElementById("vehicleNo").value;
+      const openingKM = document.getElementById("openingKM").value;
+      const odometerPhoto = document.getElementById("odometerPhoto").files[0];
+
+      if (!odometerPhoto) {
+        alert("Please upload an odometer photo!");
+        return;
+      }
+
+      try {
+        // Upload Photo to Firebase Storage
+        const photoRef = storage.ref(`odometerPhotos/${odometerPhoto.name}`);
+        const photoSnapshot = await photoRef.put(odometerPhoto);
+        const photoURL = await photoSnapshot.ref.getDownloadURL();
+
+        // Save Log to Firestore
+        await db.collection("dailylogform").add({
+          depot,
+          vehicleNo,
+          openingKM: Number(openingKM),
+          odometerPhoto: photoURL,
+          timestamp: new Date().toISOString(),
+        });
+
+        alert("Daily log submitted successfully!");
+        document.getElementById("dailyLogForm").reset();
+      } catch (error) {
+        console.error("Error submitting daily log:", error);
+      }
+    });
+  </script>
+</body>
+</html>
